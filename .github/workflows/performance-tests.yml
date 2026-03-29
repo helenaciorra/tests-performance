@@ -1,0 +1,42 @@
+name: Performance Tests
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"  # every Monday at 6am UTC
+  workflow_dispatch:      # allows manual trigger from GitHub UI
+
+jobs:
+  performance:
+    name: Smoke Test (CI-safe)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] \
+            https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update && sudo apt-get install k6
+
+      - name: Run smoke test (2 VUs, 30s)
+        run: npm run test:smoke
+
+      - name: Export k6 results as JSON
+        if: always()
+        run: k6 run --out json=k6-results.json --vus 2 --duration 30s src/forecast-load.js || true
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-results
+          path: k6-results.json
+          retention-days: 30

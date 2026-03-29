@@ -1,0 +1,11 @@
+{
+  "name": "tests-performance",
+  "version": "1.0.0",
+  "description": "Performance tests for Open-Meteo API using k6",
+  "scripts": {
+    "test:smoke":  "k6 run --vus 2 --duration 30s src/forecast-load.js",
+    "test:load":   "k6 run src/forecast-load.js",
+    "test:stress": "k6 run src/forecast-stress.js",
+    "test:spike":  "k6 run src/forecast-spike.js"
+  }
+}
